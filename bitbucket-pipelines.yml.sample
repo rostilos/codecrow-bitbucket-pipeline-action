@@ -1,0 +1,8 @@
+pipelines:
+  pull-requests:
+    "**":
+      - step:
+          name: Upload repo to pipeline-agent
+          image: codecrowai/bitbucket-analysis-executor:latest
+          script:
+            - analysis-executor
