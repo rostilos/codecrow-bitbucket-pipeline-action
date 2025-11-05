@@ -1,8 +1,21 @@
-pipelines:
+pipelines
   pull-requests:
-    "**":
-      - step:
-          name: Upload repo to pipeline-agent
-          image: codecrowai/bitbucket-analysis-executor:latest
-          script:
-            - analysis-executor
+    '**':
+      - parallel:
+          steps:
+            - step:
+                runs-on:
+                  - self.hosted
+                  - linux
+                  - sonarqube
+                name: CodeCrow AI review
+                image: codecrowai/bitbucket-analysis-executor:0.2
+                clone:
+                  enabled: false
+                script:
+                  - |
+                    if [ "${BITBUCKET_PR_DESTINATION_BRANCH}" != "develop" ]; then
+                      printf 'CodeCrow AI review skipped: Not targeting develop branch.'
+                      exit 0
+                    fi
+                    analysis-executor

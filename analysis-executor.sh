@@ -1,57 +1,46 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# analysis-executor.sh
+# analysis-executor.sh (auto-binding version)
 #
-# Entrypoint for the bitbucket-pipeline-uploader image.
-# - Builds a small payload JSON using environment variables
-# - Posts multipart/form-data to pipeline-agent's webhook-multipart endpoint and streams NDJSON output
-#
-# Required environment variables:
-#   PIPELINE_AGENT_URL   e.g. http://pipeline-agent-host:8082
-#   PROCESSING_JWT       Bearer token used by the pipeline-agent for authentication
-#   PROJECT_ID           numeric project id
-#   PULL_REQUEST_ID      numeric pull request id
-#   TARGET_BRANCH        target branch name
-#   SOURCE_BRANCH        source branch name
-#   COMMIT_HASH          commit hash
-#
-# Optional:
-#   TIMEOUT              curl timeout seconds (default 0 = no timeout)
-#
-# Notes:
-# - The script prints NDJSON lines from the pipeline-agent / streams events as they arrive.
-# - The pipeline job will fail if the HTTP request returns a non-success status.
-# - Use -N with curl to disable buffering when inspecting output locally; the script uses curl --no-buffer.
+# Automatically maps Bitbucket variables to required inputs if CodeCrow-specific ones are not provided.
 
-PIPELINE_AGENT_URL="${CODECROW_BASE_URL:-}"
-PROCESSING_JWT="${CODECROW_PROJECT_TOKEN:-}"
-PROJECT_ID="${CODECROW_PROJECT_ID:-}"
-PULL_REQUEST_ID="${PULL_REQUEST_ID:-}"
-TARGET_BRANCH="${TARGET_BRANCH:-}"
-SOURCE_BRANCH="${SOURCE_BRANCH:-}"
-COMMIT_HASH="${COMMIT_HASH:-}"
+# Prefer CodeCrow variables; fallback to Bitbucket native env vars
+PIPELINE_AGENT_URL="${CODECROW_BASE_URL:-${PIPELINE_AGENT_URL:-}}"
+PROCESSING_JWT="${CODECROW_PROJECT_TOKEN:-${PROCESSING_JWT:-}}"
+PROJECT_ID="${CODECROW_PROJECT_ID:-${PROJECT_ID:-}}"
+PULL_REQUEST_ID="${BITBUCKET_PR_ID:-${PULL_REQUEST_ID:-}}"
+TARGET_BRANCH="${BITBUCKET_PR_DESTINATION_BRANCH:-${TARGET_BRANCH:-}}"
+SOURCE_BRANCH="${BITBUCKET_BRANCH:-${SOURCE_BRANCH:-}}"
+COMMIT_HASH="${BITBUCKET_COMMIT:-${COMMIT_HASH:-}}"
 TIMEOUT="${TIMEOUT:-0}"
 
 usage() {
   cat <<EOF
-Usage: set environment variables and run this script
-Required:
-  PIPELINE_AGENT_URL PROCESSING_JWT PROJECT_ID PULL_REQUEST_ID TARGET_BRANCH SOURCE_BRANCH COMMIT_HASH
+Missing required environment variables.
+Required (one of the following for each):
+  PIPELINE_AGENT_URL or CODECROW_BASE_URL
+  PROCESSING_JWT or CODECROW_PROJECT_TOKEN
+  PROJECT_ID or CODECROW_PROJECT_ID
+  PULL_REQUEST_ID or BITBUCKET_PR_ID
+  TARGET_BRANCH or BITBUCKET_PR_DESTINATION_BRANCH
+  SOURCE_BRANCH or BITBUCKET_BRANCH
+  COMMIT_HASH or BITBUCKET_COMMIT
 EOF
   exit 1
 }
 
-if [ -z "$PIPELINE_AGENT_URL" ] || [ -z "$PROCESSING_JWT" ] || [ -z "$PROJECT_ID" ] || [ -z "$PULL_REQUEST_ID" ] || [ -z "$TARGET_BRANCH" ] || [ -z "$SOURCE_BRANCH" ] || [ -z "$COMMIT_HASH" ]; then
-  echo "Missing required environment variables."
+# Validate required vars exist after auto-binding
+if [ -z "$PIPELINE_AGENT_URL" ] || [ -z "$PROCESSING_JWT" ] || \
+   [ -z "$PROJECT_ID" ] || [ -z "$PULL_REQUEST_ID" ] || \
+   [ -z "$TARGET_BRANCH" ] || [ -z "$SOURCE_BRANCH" ] || \
+   [ -z "$COMMIT_HASH" ]; then
   usage
 fi
 
-# Ensure we are in the checked-out repo. Default working dir is /workspace (as set in Dockerfile).
 WORKDIR=${WORKDIR:-/workspace}
 cd "$WORKDIR"
 
-# Create payload.json in a temp file
 PAYLOAD_FILE="$(mktemp --suffix=.json)"
 cat > "$PAYLOAD_FILE" <<JSON
 {
@@ -63,18 +52,15 @@ cat > "$PAYLOAD_FILE" <<JSON
 }
 JSON
 
-# Build curl command
 CURL_OPTS=(--silent --no-buffer --show-error --fail)
 if [ "${TIMEOUT}" -ne 0 ]; then
   CURL_OPTS+=(--max-time "${TIMEOUT}")
 fi
 
-AUTH_HEADER="Authorization: Bearer ${PROCESSING_JWT}"
-
-# POST multipart and stream NDJSON as it arrives
-curl "${CURL_OPTS[@]}" -H "$AUTH_HEADER" \
-  --header 'Accept: application/x-ndjson' \
-  --header 'Content-Type: application/json' \
+curl "${CURL_OPTS[@]}" \
+  -H "Authorization: Bearer ${PROCESSING_JWT}" \
+  -H 'Accept: application/x-ndjson' \
+  -H 'Content-Type: application/json' \
   --data-binary @"${PAYLOAD_FILE}" \
   "${PIPELINE_AGENT_URL%/}/api/processing/bitbucket/webhook" \
   | while IFS= read -r line || [ -n "$line" ]; do
