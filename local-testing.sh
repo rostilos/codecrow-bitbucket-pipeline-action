@@ -24,13 +24,13 @@ set -euo pipefail
 # - The pipeline job will fail if the HTTP request returns a non-success status.
 # - Use -N with curl to disable buffering when inspecting output locally; the script uses curl --no-buffer.
 
-PIPELINE_AGENT_URL="${CODECROW_BASE_URL:-}"
-PROCESSING_JWT="${CODECROW_PROJECT_TOKEN:-}"
-PROJECT_ID="${CODECROW_PROJECT_ID:-}"
-PULL_REQUEST_ID="${PULL_REQUEST_ID:-}"
-TARGET_BRANCH="${TARGET_BRANCH:-}"
-SOURCE_BRANCH="${SOURCE_BRANCH:-}"
-COMMIT_HASH="${COMMIT_HASH:-}"
+PIPELINE_AGENT_URL="http://localhost:8082"
+PROCESSING_JWT="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcklkIjoiMSIsImlhdCI6MTc2MjI2Nzc1MiwiZXhwIjoxNzY0ODU5NzUyfQ.DFcz0OGiIrePw8VcUnk-eHnLTrOPmIOcmx8-LJmxerU"
+PROJECT_ID="1"
+PULL_REQUEST_ID="128"
+TARGET_BRANCH="develop"
+SOURCE_BRANCH="master"
+COMMIT_HASH="39b506fa94f1"
 TIMEOUT="${TIMEOUT:-0}"
 
 usage() {
@@ -48,7 +48,7 @@ if [ -z "$PIPELINE_AGENT_URL" ] || [ -z "$PROCESSING_JWT" ] || [ -z "$PROJECT_ID
 fi
 
 # Ensure we are in the checked-out repo. Default working dir is /workspace (as set in Dockerfile).
-WORKDIR=${WORKDIR:-/workspace}
+WORKDIR=${WORKDIR:-./workspace}
 cd "$WORKDIR"
 
 # Create payload.json in a temp file
