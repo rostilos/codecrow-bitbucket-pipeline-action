@@ -1,4 +1,17 @@
 pipelines
+  branches:
+    develop:
+      - step:
+          runs-on:
+            - self.hosted
+            - linux
+            - sonarqube
+          name: CodeCrow AI review
+          image: codecrowai/bitbucket-analysis-executor:0.2
+          clone:
+            enabled: false
+          script:
+            - analysis-executor
   pull-requests:
     '**':
       - parallel:
