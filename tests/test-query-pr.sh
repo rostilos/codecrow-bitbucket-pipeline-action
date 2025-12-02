@@ -1,0 +1,10 @@
+COMMIT_HASH="123edbb3a021361b3ae33ccc357205e7bd3f02b6" \
+PULL_REQUEST_ID="235" \
+PROJECT_ID="102" \
+TARGET_BRANCH="develop" \
+SOURCE_BRANCH="feature/backend/HF-166-dynamic-schema-json-ld-for-location" \
+COMMIT_HASH="123edbb3a021361b3ae33cc3357205e7bd3f02b6" \
+PIPELINE_AGENT_URL="http://localhost:8082" \
+TIMEOUT="300" \
+PROCESSING_JWT="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMDIiLCJ1c2VySWQiOiIxIiwiaWF0IjoxNzY0NjY3MDk3LCJleHAiOjE3NjczNDU0OTd9.Zr5zcdMXEoT9xlYqrxogWylmS74DDp9rP6uf6IAZ060" \
+bash local-testing.sh

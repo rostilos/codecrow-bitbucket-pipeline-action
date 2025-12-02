@@ -61,9 +61,6 @@ if [ "$ANALYSIS_TYPE" = "PR_REVIEW" ] && [ -z "$SOURCE_BRANCH" ]; then
   usage_pr
 fi
 
-WORKDIR=${WORKDIR:-/workspace}
-cd "$WORKDIR"
-
 #TODO: archive files for RAG indexing
 # Create archive for RAG indexing
 #ARCHIVE_FILE="$(mktemp --suffix=.tar.gz)"
