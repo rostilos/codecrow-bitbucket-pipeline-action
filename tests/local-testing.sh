@@ -117,7 +117,7 @@ if [ -n "$PULL_REQUEST_ID" ]; then
     -H 'Accept: application/x-ndjson' \
     -H 'Content-Type: application/json' \
     --data-binary @"${PAYLOAD_FILE}" \
-    "${PIPELINE_AGENT_URL%/}/api/processing/bitbucket/webhook/pr" \
+    "${PIPELINE_AGENT_URL%/}/api/processing/webhook/pr" \
     | while IFS= read -r line || [ -n "$line" ]; do
         [ -n "$line" ] && echo "EVENT: $line"
       done
@@ -136,7 +136,7 @@ else
     -H "Authorization: Bearer ${PROCESSING_JWT}" \
     -H 'Accept: application/x-ndjson' \
     -F "request=@${PAYLOAD_FILE};type=application/json" \
-    "${PIPELINE_AGENT_URL%/}/api/processing/bitbucket/webhook/branch" \
+    "${PIPELINE_AGENT_URL%/}/api/processing/webhook/branch" \
     | while IFS= read -r line || [ -n "$line" ]; do
         [ -n "$line" ] && echo "EVENT: $line"
       done
